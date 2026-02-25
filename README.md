@@ -1,12 +1,11 @@
 # Collector (Django + django-tailwind)
 
 This is a Django project that:
+
 - Serves a **video gallery** from files in `media/videos/`.
 - While a user watches a video, periodically captures **webcam snapshots**.
 - Prompts the user for **valence/arousal ratings** for captured snapshots.
 - Collects additional **questionnaires** and writes results to CSV for export.
-
----
 
 ## Tech stack
 
@@ -14,8 +13,6 @@ This is a Django project that:
 - SQLite (`db.sqlite3`) for core app data
 - Tailwind via `django-tailwind` + PostCSS (theme app: `theme/`)
 - Node.js + npm (used by Tailwind build)
-
----
 
 ## Project layout (high level)
 
@@ -25,17 +22,14 @@ This is a Django project that:
 - `media/` – runtime data: videos, captures, CSV exports
 - `static/` – project-level static assets
 
----
-
 ## Requirements (PC setup)
 
 1) Install:
+
 - **Python 3.11**
 - **Node.js + npm** (LTS is fine)
 
-2) Recommended: git, VS Code
-
----
+1) Recommended: git, VS Code
 
 ## Setup (Windows / PC)
 
@@ -102,18 +96,18 @@ honcho start -f Procfile.tailwind
 **Option B: two terminals**
 
 Terminal 1:
+
 ```powershell
 python manage.py runserver
 ```
 
 Terminal 2:
+
 ```powershell
 python manage.py tailwind start
 ```
 
-Open: http://127.0.0.1:8000/
-
----
+Open: <http://127.0.0.1:8000/>
 
 ## Setup (macOS/Linux)
 
@@ -127,8 +121,6 @@ cd theme/static_src && npm install && npm run build
 honcho start -f Procfile.tailwind
 ```
 
----
-
 ## Environment variables (`.env`)
 
 See `.env.example` for the canonical list.
@@ -136,11 +128,6 @@ See `.env.example` for the canonical list.
 ### Required
 
 - `DJANGO_SECRET_KEY` – Django secret key
-
-### Common
-
-- `DJANGO_DEBUG` – `1`/`0` (defaults to `1`)
-- `DJANGO_ALLOWED_HOSTS` – comma-separated list, e.g. `localhost,127.0.0.1`
 
 ### Tailwind / Node
 
@@ -153,8 +140,6 @@ See `.env.example` for the canonical list.
 
 - `CAPTURE_INTERVAL_SEC` – capture interval in seconds (default: `10`)
 
----
-
 ## Where to put videos
 
 The gallery reads videos from:
@@ -162,6 +147,7 @@ The gallery reads videos from:
 - `media/videos/`
 
 Supported extensions:
+
 - `.mp4`, `.webm`, `.ogg`, `.mov`, `.m4v`
 
 Example:
@@ -175,8 +161,6 @@ media/
 
 On refresh, the app lists these files and serves them via `MEDIA_URL`.
 
----
-
 ## Where data is stored (hierarchy)
 
 This project stores data in both **SQLite** and **CSV files** for easy export.
@@ -186,6 +170,7 @@ This project stores data in both **SQLite** and **CSV files** for easy export.
 - `db.sqlite3`
 
 Models include:
+
 - `CaptureRating` – links a user, video name, and capture file path to valence/arousal
 - `WatchedVideo` – tracks which video index a user completed
 - `UserVideoProgress` – tracks next video index and overall progress
@@ -214,6 +199,7 @@ When the user submits a valence/arousal rating, a row is appended to:
 - `media/users/<user_id>/user_<user_id>.csv`
 
 Columns:
+
 - `video_name`
 - `timestamp` (Unix milliseconds)
 - `snapshot_name` (the capture filename)
@@ -225,6 +211,7 @@ Columns:
 - `media/users/<user_id>/user_<user_id>_clips-ques.csv`
 
 Columns:
+
 - `timestamp` (Unix milliseconds)
 - `video_name`
 - `clip_valence`, `clip_arousal`, `user_valence`, `user_arousal`
@@ -234,11 +221,10 @@ Columns:
 - `media/questionnaire_responses.csv`
 
 Columns:
+
 - `username_or_email`
 - `timestamp` (Unix milliseconds)
 - `q1..q20`
-
----
 
 ## Working with timestamps (Unix ms)
 
@@ -251,8 +237,6 @@ from datetime import datetime, timezone
 ms = 1730000000000
 print(datetime.fromtimestamp(ms/1000, tz=timezone.utc))
 ```
-
----
 
 ## Tailwind commands
 
@@ -270,16 +254,17 @@ npm run build
 ```
 
 Build output CSS is written to:
-- `theme/static/css/dist/styles.css`
 
----
+- `theme/static/css/dist/styles.css`
 
 ## Troubleshooting
 
 ### Tailwind fails to start (`npm` not found)
+
 Set `NPM_BIN_PATH` in `.env` to your npm executable path (see `.env.example`).
 
 ### Port already in use
+
 If Django fails with “port 8000 is already in use”, either stop the other process or run:
 
 ```bash
@@ -287,8 +272,6 @@ python manage.py runserver 0.0.0.0:8001
 ```
 
 (And update your Procfile if you want that permanently.)
-
----
 
 ## Security notes
 

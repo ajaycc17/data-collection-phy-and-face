@@ -1,0 +1,157 @@
+{% extends "VidandFace/auth_base.html" %}
+
+{% block title %}Login{% endblock %}
+{% block heading %}Welcome back!{% endblock %}
+{% block subheading %}
+  <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Log in to continue.</p>
+{% endblock %}
+
+{% block pre_form %}
+  
+{% endblock %}
+
+{% block form %}
+  <form method="post" id="login-form" class="space-y-4">
+    {% csrf_token %}
+    <input type="hidden" name="camera_granted" id="camera-granted" value="0" />
+
+    <input
+      id="email"
+      name="email"
+      type="email"
+      required
+      placeholder="Email"
+      class="block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500"
+    />
+
+    <input
+      id="password"
+      name="password"
+      type="password"
+      required
+      placeholder="Password"
+      class="block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500"
+    />
+
+    <button
+      id="login-btn"
+      type="submit"
+      disabled
+      class="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200 dark:disabled:opacity-50"
+    >
+      Login
+    </button>
+  </form>
+{% endblock %}
+
+{% block post_footer %}
+  <div class="mt-4 flex items-stretch gap-3">
+    <div
+      id="camera-alert"
+      role="alert"
+      class="flex flex-1 items-start gap-2 rounded-xl border px-3 py-2 text-sm dark:border-neutral-600"
+    >
+      <span id="camera-icon" class="material-symbols-outlined text-[18px] leading-5">hourglass_top</span>
+      <span id="camera-alert-text">Checking camera permission…</span>
+    </div>
+
+    <button
+      id="ask-camera-btn"
+      type="button"
+      disabled
+      class="inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-neutral-300 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-neutral-600 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700 dark:disabled:opacity-50"
+    >
+      Ask
+    </button>
+  </div>
+{% endblock %}
+
+{% block footer %}
+  Not registered yet?
+  <a class="font-medium text-neutral-900 hover:underline dark:text-neutral-200 dark:hover:text-neutral-100" href="{% url 'signup' %}">Register now</a>
+{% endblock %}
+
+{% block right_content %}
+  <p class="text-2xl font-semibold tracking-tight">Data collection app</p>
+  <p class="mt-2 text-sm text-neutral-600">To collect facial image data and self-reports.</p>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    (function () {
+      const alertBox = document.getElementById('camera-alert');
+      const alertText = document.getElementById('camera-alert-text');
+      const alertIcon = document.getElementById('camera-icon');
+      const btn = document.getElementById('login-btn');
+      const askBtn = document.getElementById('ask-camera-btn');
+      const grantedInput = document.getElementById('camera-granted');
+      const form = document.getElementById('login-form');
+
+      let cameraOk = false;
+
+      function setAskEnabled(enabled) {
+        askBtn.disabled = !enabled;
+      }
+
+      function setAlert(state, message) {
+        const base = 'flex flex-1 items-center gap-2 rounded-xl border px-3 py-2 text-sm';
+        const map = {
+          checking: 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200',
+          granted: 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+          denied: 'border-red-200 bg-red-50 text-red-700 dark:border-red-700 dark:bg-red-900/40 dark:text-red-200',
+        };
+        alertBox.className = `${base} ${map[state] || map.checking}`;
+
+        const icons = {
+          checking: 'hourglass_top',
+          granted: 'check_circle',
+          denied: 'error',
+        };
+        alertIcon.textContent = icons[state] || icons.checking;
+        alertText.textContent = message;
+      }
+
+      function setCamera(ok, message, state) {
+        cameraOk = ok;
+        grantedInput.value = ok ? '1' : '0';
+        btn.disabled = !ok;
+        setAlert(state || (ok ? 'granted' : 'denied'), message);
+
+        // Only allow re-requesting permission when it is denied.
+        const resolvedState = state || (ok ? 'granted' : 'denied');
+        setAskEnabled(resolvedState === 'denied' && !ok);
+      }
+
+      async function requestCamera() {
+        setAskEnabled(false);
+        setAlert('checking', 'Checking camera permission…');
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          setCamera(false, 'Camera not available in this browser. Login disabled.', 'denied');
+          setAskEnabled(false);
+          return;
+        }
+
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+          for (const track of stream.getTracks()) track.stop();
+          setCamera(true, 'Camera permission granted. You can log in.', 'granted');
+        } catch (e) {
+          setCamera(false, 'Camera permission denied. Login is disabled.', 'denied');
+        }
+      }
+
+      form.addEventListener('submit', (e) => {
+        if (!cameraOk) {
+          e.preventDefault();
+          setCamera(false, 'Camera permission denied. Login is disabled.', 'denied');
+        }
+      });
+
+      askBtn.addEventListener('click', () => {
+        requestCamera();
+      });
+
+      requestCamera();
+    })();
+  </script>
+{% endblock %}

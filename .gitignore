@@ -1,0 +1,77 @@
+# Django + django-tailwind + Node/NPM
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Django artifacts
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media / uploads (usually not committed)
+media/*
+!media/videos
+media/videos/*
+# If you prefer to keep media structure but not files, use:
+# media/*
+# !media/.gitkeep
+
+# Staticfiles output (collectstatic)
+staticfiles/
+# If you use a different STATIC_ROOT, add it here too.
+
+# Django SECRET_KEY / env files
+.env
+.env.*
+!.env.example
+
+# Node / Tailwind (django-tailwind theme app)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Tailwind build outputs (common)
+# django-tailwind typically outputs to your theme's static dir; ignore build artifacts if desired:
+**/static/css/*.css.map
+**/static/css/*.min.css
+**/static/css/*.min.css.map
+**/static_src/.parcel-cache/
+**/static_src/.cache/
+**/static_src/dist/
+**/static_src/build/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Jupyter (if any)
+.ipynb_checkpoints/
+
+# Coverage
+.coverage
+htmlcov/
+coverage.xml
+
+# Mac temporary files
+*.swp
+*.swo

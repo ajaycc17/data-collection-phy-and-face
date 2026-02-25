@@ -1,0 +1,528 @@
+{% load tailwind_tags django_browser_reload %}
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Collector{% endblock %}</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Google+Sans+Code:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0,0" rel="stylesheet" />
+
+  {% tailwind_css %}
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-screen flex flex-col {% block body_class %}bg-neutral-50 text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100{% endblock %}">
+  {% block navbar %}
+    <header class="sticky top-0 pt-3">
+      <div class="mx-auto max-w-6xl px-6 rounded-xl bg-neutral-200/60 dark:bg-neutral-800/80 backdrop-blur">
+        <div class="flex items-center justify-between py-3">
+          <div class="flex items-center">
+            <a href="{% url 'video-gallery' %}" class="text-lg font-semibold tracking-normal dark:text-neutral-100">DataColl</a>
+          </div>
+
+          <div class="flex items-center justify-end gap-8">
+            <a class="text-sm font-medium text-neutral-800 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-neutral-100" href="#">About</a>
+            {% if user.is_authenticated %}
+              <div class="flex items-center gap-2 bg-neutral-200/60 dark:bg-neutral-600/80 backdrop-blur rounded-full pr-4">
+                <div class="grid h-9 w-9 place-items-center rounded-full bg-white text-neutral-700 dark:bg-neutral-800/50 dark:text-neutral-200" aria-hidden="true">
+                  <span class="material-symbols-outlined text-[20px]">person</span>
+                </div>
+                <span class="hidden sm:inline text-sm font-medium text-neutral-800 dark:text-neutral-200">
+                  {{ user.email|default:user.username }}
+                </span>
+              </div>
+              <a
+                id="logout-btn"
+                class="inline-flex items-center justify-center rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                href="{% url 'logout' %}"
+              >
+                Logout
+              </a>
+            {% else %}
+              <a
+                class="inline-flex items-center justify-center rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+                href="{% url 'login' %}"
+              >
+                Login
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </header>
+  {% endblock %}
+
+  <main class="flex-1 {% block main_class %}mx-auto w-full max-w-6xl px-6 py-8{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if user.is_authenticated %}
+  <form id="mcq-csrf-form" class="hidden">{% csrf_token %}</form>
+  <div id="mcq-modal-backdrop" class="fixed inset-0 z-[1200] hidden items-center justify-center bg-black/35 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="mcq-modal-title" style="display: none;">
+    <div class="flex min-h-0 w-[900px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-white/50 bg-white/25 px-6 py-5 shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-neutral-800/60">
+      <h2 id="mcq-modal-title" class="flex-shrink-0 text-lg font-semibold text-neutral-900 dark:text-neutral-100">Quick questionnaire</h2>
+      <p class="mt-1 flex-shrink-0 text-sm text-neutral-600 dark:text-neutral-400">Please answer the following (shown after login).</p>
+      <div class="mt-4 max-h-[calc(85vh-10rem)] min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain">
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">1. Are you tired?(0-not at all tired, 10-extremely tired)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q1" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">2. Are you feeling sleepy? (0-not at all sleepy, 10- extremely sleepy)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q2" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">3. Are you feeling drowsy? (0-not at all drowsy, 10- extremely drowsy)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q3" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">4. Are you feeling fatigued? (0-not at all fatigued, 10- extremely fatigued)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q4" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">5. Are you feeling worn out? (0-not at all worn out, 10- extremely worn out)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q5" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">6. Are you feeling energetic? (0-not at all energetic, 10- extremely energetic)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q6" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">7. Are you feeling active? (0-not at all active, 10- extremely active)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q7" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">8. Are you feeling vigorous? (0-not at all vigorous, 10- extremely vigorous)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q8" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">9. Are you feeling efficient? (0-not at all efficient, 10- extremely efficient)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q9" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">10. Are you feeling lively? (0-not at all lively, 10- extremely lively)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q10" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">11. Are you feeling bushed? (0-not at all bushed, 10- extremely bushed)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q11" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">12. Are you feeling exhausted? (0-not at all exhausted, 10- extremely exhausted)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q12" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">13. Keeping my eyes open is (0-no effort at all, 10- a tremendous chore)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q13" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">14. Moving my body is (0-no effort at all, 10- a tremendous chore)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q14" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">15. Concentrating is (0-no effort at all, 10- a tremendous chore)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q15" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">16. Carrying on a conversation is (0-no effort at all, 10- a tremendous chore)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q16" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">17. I have absolutely (0-no desire to close my eyes, 10- a tremendous desire to close my eyes)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q17" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">18. I have absolutely (0-no desire to lie down, 10- a tremendous desire to lie down)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q18" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">19. How pleasant are you feeling (0-not pleasant at all, 10- very pleasant)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q19" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-medium text-neutral-800 dark:text-neutral-200">20. How active/energetic are you feeling? (0-not at all active, 10- very active/energetic)</legend>
+          <div class="mt-2 flex flex-wrap gap-3">
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="0" class="h-4 w-4 accent-green-700 dark:accent-green-400" required> 0</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="1" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 1</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="2" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 2</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="3" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 3</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="4" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 4</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="5" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 5</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="6" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 6</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="7" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 7</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="8" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 8</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="9" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 9</label>
+            <label class="flex cursor-pointer items-center gap-2 rounded-xl border border-neutral-300 bg-white/50 px-3 py-2 text-sm dark:border-neutral-600 dark:bg-neutral-700/50 dark:text-neutral-200"><input type="radio" name="q20" value="10" class="h-4 w-4 accent-green-700 dark:accent-green-400"> 10</label>
+          </div>
+        </fieldset>
+      </div>
+      <div class="mt-6 flex shrink-0 justify-end gap-2">
+        <button type="button" id="mcq-modal-submit" class="inline-flex items-center justify-center rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-100">Submit</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function() {
+      var storageKey = 'mcqQuestionnaireShown';
+      var urlParams = new URLSearchParams(window.location.search);
+      var showFromLogin = urlParams.get('show_mcq') === '1';
+      var backdrop = document.getElementById('mcq-modal-backdrop');
+      var submitBtn = document.getElementById('mcq-modal-submit');
+      if (!backdrop || !submitBtn) return;
+
+      var csrfInput = document.querySelector('#mcq-csrf-form input[name="csrfmiddlewaretoken"]');
+      var csrfToken = csrfInput ? csrfInput.value : '';
+      var endpoint = '{% url "submit-mcq-questionnaire" %}';
+      var logoutUrl = '{% url "logout" %}';
+
+      function showMcqModal() {
+        backdrop.style.display = 'flex';
+        backdrop.classList.remove('hidden');
+      }
+
+      function resetMcqForm() {
+        var radios = backdrop.querySelectorAll('input[type="radio"]');
+        for (var i = 0; i < radios.length; i++) radios[i].checked = false;
+        submitBtn.disabled = false;
+      }
+
+      function closeMcqModal() {
+        backdrop.style.display = 'none';
+        backdrop.classList.add('hidden');
+      }
+
+      if (showFromLogin || !sessionStorage.getItem(storageKey)) {
+        if (showFromLogin && window.history.replaceState) {
+          urlParams.delete('show_mcq');
+          var newSearch = urlParams.toString();
+          var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+          window.history.replaceState({}, '', newUrl);
+        }
+        showMcqModal();
+      }
+
+      backdrop.addEventListener('click', function(e) {
+        if (e.target === backdrop) closeMcqModal();
+      });
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && backdrop.style.display === 'flex') closeMcqModal();
+      });
+
+      submitBtn.addEventListener('click', function() {
+        var body = {};
+        var allAnswered = true;
+        for (var i = 1; i <= 20; i++) {
+          var el = backdrop.querySelector('input[name="q' + i + '"]:checked');
+          if (!el) { allAnswered = false; break; }
+          body['q' + i] = el.value;
+        }
+        if (!allAnswered) {
+          alert('Please answer all 20 questions.');
+          return;
+        }
+        submitBtn.disabled = true;
+        fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+          body: JSON.stringify(body)
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.ok) {
+            if (window.mcqLogoutPending) {
+              window.mcqLogoutPending = false;
+              window.location.href = logoutUrl;
+            } else {
+              sessionStorage.setItem(storageKey, '1');
+              closeMcqModal();
+            }
+          } else {
+            alert(data.error || 'Something went wrong.');
+            submitBtn.disabled = false;
+          }
+        })
+        .catch(function() {
+          alert('Failed to submit. Please try again.');
+          submitBtn.disabled = false;
+        });
+      });
+
+      var logoutBtn = document.getElementById('logout-btn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          window.mcqLogoutPending = true;
+          resetMcqForm();
+          showMcqModal();
+        });
+      }
+    })();
+  </script>
+  <script>
+    (function() {
+      var logoutOnCloseUrl = '{% url "logout-on-close" %}';
+      var csrfInput = document.querySelector('#mcq-csrf-form input[name="csrfmiddlewaretoken"]');
+      var csrfToken = csrfInput ? csrfInput.value : '';
+      function doLogoutBeacon() {
+        var fd = new FormData();
+        fd.append('csrfmiddlewaretoken', csrfToken);
+        fd.append('next', '/');
+        navigator.sendBeacon(logoutOnCloseUrl, fd);
+      }
+      window.addEventListener('beforeunload', doLogoutBeacon);
+      window.addEventListener('pagehide', doLogoutBeacon);
+    })();
+  </script>
+  {% endif %}
+
+  {% block site_footer %}
+    <footer class="mt-auto pb-3">
+      <div class="mx-auto max-w-6xl px-6 rounded-xl bg-neutral-200/60 dark:bg-neutral-800/80 backdrop-blur">
+        <div class="py-3 flex items-center justify-between text-sm text-neutral-700 dark:text-neutral-300">
+          {% block footer %}
+            <div class="tabular-nums">2026 - {% now "Y" %}</div>
+            <div class="flex items-center gap-4">
+              <a class="hover:text-neutral-900 dark:hover:text-neutral-100" href="#">GitHub</a>
+              <span>Ajay Choudhury</span>
+            </div>
+          {% endblock %}
+        </div>
+      </div>
+    </footer>
+  {% endblock %}
+
+  {% block scripts %}{% endblock %}
+  {% django_browser_reload_script %}
+</body>
+</html>

@@ -1,0 +1,9 @@
+#!/usr/bin/env sh
+set -eu
+
+NODE_BIN="/Users/ajaych17/.nvm/versions/node/v24.13.1/bin/node"
+NPM_CLI="/Users/ajaych17/.nvm/versions/node/v24.13.1/lib/node_modules/npm/bin/npm-cli.js"
+
+export PATH="$(dirname "$NODE_BIN"):$PATH"
+
+exec "$NODE_BIN" "$NPM_CLI" "$@"

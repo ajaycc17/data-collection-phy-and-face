@@ -1,0 +1,58 @@
+{% extends "VidandFace/base.html" %}
+{% load static %}
+
+{% block title %}Auth{% endblock %}
+{% block body_class %}bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100{% endblock %}
+{% block main_class %}min-h-screen{% endblock %}
+
+{% block navbar %}{% endblock %}
+{% block site_footer %}{% endblock %}
+
+{% block content %}
+  <div class="mx-auto grid min-h-screen max-w-6xl grid-cols-1 lg:grid-cols-2">
+    <section class="flex items-center justify-center px-6 py-10">
+      <div class="w-full max-w-md">
+        <div>
+          <h1 class="text-4xl font-semibold tracking-tight dark:text-neutral-100">{% block heading %}{% endblock %}</h1>
+          {% block subheading %}{% endblock %}
+        </div>
+
+        {% if error %}
+          <div class="mt-5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-200">
+            {{ error }}
+          </div>
+        {% endif %}
+
+        {% block pre_form %}{% endblock %}
+
+        <div class="mt-6">
+          {% block form %}{% endblock %}
+        </div>
+
+        <div class="mt-6 text-sm text-neutral-600 dark:text-neutral-400">
+          {% block footer %}{% endblock %}
+        </div>
+
+        {% block post_footer %}{% endblock %}
+      </div>
+    </section>
+
+    <aside class="hidden lg:flex items-center justify-center p-8">
+      <div
+        class="relative h-full w-full overflow-hidden rounded-3xl bg-neutral-50 dark:bg-neutral-800"
+        style="background-image: url('{% static 'VidandFace/auth.jpeg' %}'); background-size: cover; background-position: center;"
+      >
+        <div class="absolute bg-white/60 dark:bg-neutral-900/70"></div>
+
+        <div class="relative flex h-full flex-col items-center justify-center p-10">
+          <div class="max-w-md text-center">
+            {% block right_content %}
+              <p class="text-xl font-semibold tracking-tight dark:text-neutral-100">Your app description here</p>
+              <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Add details about what this app does on top of an image.</p>
+            {% endblock %}
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+{% endblock %}

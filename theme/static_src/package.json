@@ -1,0 +1,26 @@
+{
+  "name": "theme",
+  "version": "4.4.0",
+  "description": "",
+  "scripts": {
+    "start": "node ./node_modules/postcss-cli/index.js ./src/styles.css -o ../static/css/dist/styles.css --watch",
+    "build": "node -e \"const fs=require('fs'); const path=require('path'); fs.rmSync(path.resolve(__dirname,'../static/css/dist'),{recursive:true,force:true});\" && node ./node_modules/postcss-cli/index.js ./src/styles.css -o ../static/css/dist/styles.css --minify",
+    "dev": "node ./node_modules/postcss-cli/index.js ./src/styles.css -o ../static/css/dist/styles.css --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.16",
+    "cross-env": "^10.1.0",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "postcss-nested": "^7.0.2",
+    "postcss-simple-vars": "^7.0.1",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.1.16"
+  },
+  "dependencies": {
+    "lightningcss": "^1.31.1"
+  }
+}

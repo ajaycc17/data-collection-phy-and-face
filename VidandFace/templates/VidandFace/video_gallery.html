@@ -1,0 +1,950 @@
+{% extends "VidandFace/base.html" %}
+
+{% block title %}Video Gallery{% endblock %}
+
+{% block main_class %}mx-auto w-full max-w-6xl pt-3 pb-8{% endblock %}
+
+{% block extra_head %}
+    <style>
+        .btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .switch {
+            position: relative;
+            width: 46px;
+            height: 26px;
+            display: inline-block;
+            flex: 0 0 auto;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #fecaca;
+            transition: .2s;
+            border-radius: 999px;
+            border: 1px solid #f87171;
+        }
+        .switch input:checked + .slider {
+            background-color: #22c55e;
+            border-color: #16a34a;
+        }
+        .dark .slider { background-color: #7f1d1d; border-color: #991b1b; }
+        .dark .switch input:checked + .slider { background-color: #14532d; border-color: #166534; }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 2px;
+            top: 2px;
+            background-color: #fff;
+            transition: .2s;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .dark .slider:before { border-color: rgba(255, 255, 255, 0.2); }
+        .switch input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.35);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+        }
+        .modal-backdrop-clip {
+            z-index: 1100;
+        }
+        .modal {
+            width: 100%;
+            max-width: 900px;
+            max-height: calc(100vh - 72px);
+            overflow: auto;
+            background: rgba(255, 255, 255, 0.25);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            padding: 24px;
+        }
+        .dark .modal {
+            background: rgba(38, 38, 38, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            -webkit-box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+        .modal h2 {
+            margin: 0 0 10px;
+            font-size: 18px;
+        }
+        .dark .modal h2 { color: #fafafa; }
+        .modal .row {
+            margin: 0;
+        }
+        .modal .row > label {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 10px;
+            font-weight: 600;
+            color: #262626;
+        }
+        .dark .modal .row > label { color: #e5e5e5; }
+        .modal input[type="range"].range {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 10px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: linear-gradient(
+                to right,
+                rgba(21, 128, 61, 0.95) 0%,
+                rgba(21, 128, 61, 0.95) var(--pct, 50%),
+                rgba(255, 255, 255, 0.35) var(--pct, 50%),
+                rgba(255, 255, 255, 0.35) 100%
+            );
+            outline: none;
+        }
+        .modal input[type="range"].range::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(15, 23, 42, 0.15);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.22);
+            cursor: pointer;
+        }
+        .modal input[type="range"].range::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(15, 23, 42, 0.15);
+            box-shadow: 0 10px 18px rgba(15, 23, 42, 0.22);
+            cursor: pointer;
+        }
+        .modal input[type="range"].range::-moz-range-track {
+            height: 10px;
+            border-radius: 999px;
+            background: transparent;
+            border: none;
+        }
+        .modal .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .hint {
+            color: #737373;
+            font-size: 13px;
+            margin-top: 6px;
+        }
+        .dark .hint { color: #a3a3a3; }
+        .empty {
+            padding: 16px;
+            border-radius: 8px;
+            background: #fff;
+            border: 1px dashed #d4d4d4;
+            max-width: 860px;
+        }
+        .dark .empty { background: #262626; border-color: #525252; color: #e5e5e5; }
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .dark code { background: #404040; color: #e5e5e5; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <form id="csrf-form" class="hidden">{% csrf_token %}</form>
+
+    {% if current_video %}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+            <section class="lg:col-span-3">
+                <div class="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                        {% if has_prev %}
+                            <a
+                                class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                                data-nav="prev"
+                                data-index="{{ prev_index }}"
+                                href="?i={{ prev_index }}"
+                            >
+                                Previous
+                            </a>
+                        {% else %}
+                            <span class="btn disabled inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white">Previous</span>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        {% if has_next %}
+                            <a
+                                class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                                data-nav="next"
+                                data-index="{{ next_index }}"
+                                href="?i={{ next_index }}"
+                            >
+                                Next
+                            </a>
+                        {% else %}
+                            <span class="btn disabled inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white">Next</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="relative overflow-hidden">
+                    <video id="main-video" class="w-full cursor-pointer rounded-t-3xl bg-black" preload="metadata" data-video-name="{{ current_video.name|escapejs }}" data-video-index="{{ current_index }}">
+                        <source src="{{ current_video.url }}">
+                        Your browser does not support the video tag.
+                    </video>
+
+                    <div class="pointer-events-none absolute inset-x-0 bottom-0">
+                        <div class="flex items-center justify-between gap-3 px-3 pb-3">
+                            <button
+                                id="play-btn"
+                                type="button"
+                                class="pointer-events-auto inline-flex cursor-pointer items-center justify-center rounded-xl border border-white/30 bg-white/15 px-3 py-2 text-white shadow-sm backdrop-blur-md hover:bg-white/20"
+                                aria-label="Play"
+                            >
+                                <span id="play-icon" class="material-symbols-outlined text-[20px] leading-5">play_arrow</span>
+                            </button>
+
+                            <div id="time" class="pointer-events-none rounded-xl border border-white/20 bg-black/30 px-3 py-1 text-sm text-white backdrop-blur-md tabular-nums">0:00 / 0:00</div>
+                        </div>
+
+                        <div class="h-1 bg-white/35 backdrop-blur-md">
+                            <div id="progress-fill" class="h-full w-0 bg-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <h1 class="mt-4 text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">{{ current_video.name }}</h1>
+
+                <div class="text-sm text-neutral-600 dark:text-neutral-400">Video {{ current_index|add:1 }} of {{ total }}</div>
+
+            </section>
+
+            <aside class="lg:col-span-1">
+                <div class="rounded-xl bg-white p-4 dark:bg-neutral-800">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Progress</div>
+                        <div class="text-sm text-neutral-600 dark:text-neutral-400">{{ videos_watched }} / {{ total }} watched</div>
+                    </div>
+                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+                        <div class="h-full bg-neutral-900 dark:bg-neutral-100" style="width: {{ progress_pct }}%;"></div>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-xl bg-white p-4 dark:bg-neutral-800" aria-label="Ask after capture toggle">
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Self-Reports</div>
+                        <div class="text-xs text-neutral-500 dark:text-neutral-400">Optional</div>
+                    </div>
+                    <div class="mt-3 flex items-center gap-3 text-sm text-neutral-700 dark:text-neutral-300">
+                        <label class="switch" title="Enable/disable rating prompt">
+                            <input id="ask-toggle" type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                        <div>Ask for self-reports</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 rounded-xl bg-white p-4 dark:bg-neutral-800">
+                    <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Snapshot status</div>
+                    <div id="status" class="mt-3 text-sm text-neutral-700 dark:text-neutral-300">
+                        Waiting…
+                    </div>
+                    <div id="status-count" class="mt-1 text-sm text-neutral-600 dark:text-neutral-400 tabular-nums">Captured: 0</div>
+                </div>
+
+                <div class="mt-4 rounded-xl bg-white p-4 dark:bg-neutral-800">
+                    <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Physiological feed</div>
+                    <div class="mt-3 flex items-center justify-between gap-2">
+                        <div class="text-xs text-neutral-600 dark:text-neutral-400">
+                            Last payload: <span id="phys-last-ts" class="tabular-nums">—</span>
+                        </div>
+                        <span
+                            id="phys-conn-pill"
+                            class="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-900/50 dark:text-red-200"
+                        >
+                            Inactive
+                        </span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <div id="modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <div class="modal">
+                <h2 id="modal-title">How do you feel right now?</h2>
+                <div class="mt-4 flex flex-col gap-6">
+                    <div class="row">
+                        <label for="valence">Valence <span id="valence-val">3.00</span></label>
+                        <input id="valence" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😞 Very negative</div>
+                            <div>5 😀 Very positive</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="arousal">Arousal <span id="arousal-val">3.00</span></label>
+                        <input id="arousal" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😌 Very calm</div>
+                            <div>5 🤩 Very excited</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="submit-rating" type="button" class="inline-flex items-center justify-center rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-100">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="clip-modal-backdrop" class="modal-backdrop modal-backdrop-clip" role="dialog" aria-modal="true" aria-labelledby="clip-modal-title">
+            <div class="modal">
+                <h2 id="clip-modal-title">Rate this clip (video ended)</h2>
+                <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-400">Please rate the clip and how you feel.</p>
+                <div class="mt-4 grid grid-cols-2 grid-rows-2 gap-6">
+                    <div class="row">
+                        <label for="clip-valence">How pleasant does the clip seem to be? <span id="clip-valence-val">3.00</span></label>
+                        <input id="clip-valence" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😞 Not so pleasant</div>
+                            <div>5 😀 Very pleasant</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="clip-arousal">How active/energetic does the clip seem to be? <span id="clip-arousal-val">3.00</span></label>
+                        <input id="clip-arousal" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😌 Not so active/energetic</div>
+                            <div>5 🤩 Very active/energetic</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="user-valence">How pleasant do you feel right now? <span id="user-valence-val">3.00</span></label>
+                        <input id="user-valence" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😞 Not so pleasant</div>
+                            <div>5 😀 Very pleasant</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label for="user-arousal">How active/energetic do you feel right now? <span id="user-arousal-val">3.00</span></label>
+                        <input id="user-arousal" class="range" type="range" min="1" max="5" step="0.01" value="3.00">
+                        <div class="mt-2 flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400">
+                            <div>1 😌 Not so active/energetic</div>
+                            <div>5 🤩 Very active/energetic</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button id="submit-clip-questionnaire" type="button" class="inline-flex items-center justify-center rounded-xl bg-neutral-800 px-4 py-2 text-sm font-medium text-white hover:bg-neutral-700 dark:bg-neutral-200 dark:text-neutral-900 dark:hover:bg-neutral-100">Submit</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const mainVideo = document.getElementById('main-video');
+                const statusEl = document.getElementById('status');
+                const statusCountEl = document.getElementById('status-count');
+                const playBtn = document.getElementById('play-btn');
+                const progressFill = document.getElementById('progress-fill');
+                const timeEl = document.getElementById('time');
+                const playIconEl = document.getElementById('play-icon');
+
+                const physLastTsEl = document.getElementById('phys-last-ts');
+                const physConnPillEl = document.getElementById('phys-conn-pill');
+
+                const askToggle = document.getElementById('ask-toggle');
+                const modalBackdrop = document.getElementById('modal-backdrop');
+                const valenceInput = document.getElementById('valence');
+                const arousalInput = document.getElementById('arousal');
+                const valenceVal = document.getElementById('valence-val');
+                const arousalVal = document.getElementById('arousal-val');
+                const submitRatingBtn = document.getElementById('submit-rating');
+
+                const clipModalBackdrop = document.getElementById('clip-modal-backdrop');
+                const clipValenceInput = document.getElementById('clip-valence');
+                const clipArousalInput = document.getElementById('clip-arousal');
+                const userValenceInput = document.getElementById('user-valence');
+                const userArousalInput = document.getElementById('user-arousal');
+                const clipValenceVal = document.getElementById('clip-valence-val');
+                const clipArousalVal = document.getElementById('clip-arousal-val');
+                const userValenceVal = document.getElementById('user-valence-val');
+                const userArousalVal = document.getElementById('user-arousal-val');
+                const submitClipBtn = document.getElementById('submit-clip-questionnaire');
+
+                function updateRangeVisual(inputEl) {
+                    if (!inputEl) return;
+                    const min = Number(inputEl.min || '0');
+                    const max = Number(inputEl.max || '100');
+                    const val = Number(inputEl.value || '0');
+                    const pct = (max > min) ? ((val - min) / (max - min)) * 100 : 0;
+                    inputEl.style.setProperty('--pct', `${Math.max(0, Math.min(100, pct))}%`);
+                }
+
+                const prevLink = document.querySelector('[data-nav="prev"]');
+                const nextLink = document.querySelector('[data-nav="next"]');
+
+                const csrfInput = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
+                const csrfToken = csrfInput ? csrfInput.value : '';
+
+                const videoName = mainVideo.getAttribute('data-video-name') || 'unknown';
+                const videoIndex = parseInt(mainVideo.getAttribute('data-video-index') || '0', 10);
+                const watchedKey = `watched:${videoName}`;
+                const captureEndpoint = "{% url 'capture-photo' %}";
+                const ratingEndpoint = "{% url 'submit-rating' %}";
+                const clipQuestionnaireEndpoint = "{% url 'submit-clip-questionnaire' %}";
+                const markWatchedEndpoint = "{% url 'mark-watched' %}";
+                const askKey = 'askAfterCaptureEnabled';
+                const captureIntervalMs = {{ capture_interval_ms|default:10000 }};
+                const captureIntervalLabel = (captureIntervalMs % 1000 === 0)
+                    ? ((captureIntervalMs / 1000) + 's')
+                    : (captureIntervalMs + 'ms');
+
+                let isWatched = localStorage.getItem(watchedKey) === '1';
+                let stream = null;
+                let webcamVideo = null;
+                let captureTimer = null;
+                let captureStarting = null;
+                let captureCount = 0;
+                let seekBlockMessageShown = false;
+                let lastAllowedTime = 0;
+                let programmaticSeek = false;
+                let pendingCaptureId = null;
+                let modalOpen = false;
+                let clipModalOpen = false;
+
+                let physLastPayloadAt = null;
+
+                function formatClock(d) {
+                    const hh = String(d.getHours()).padStart(2, '0');
+                    const mm = String(d.getMinutes()).padStart(2, '0');
+                    const ss = String(d.getSeconds()).padStart(2, '0');
+                    return `${hh}:${mm}:${ss}`;
+                }
+
+                function setPhysConnection(active) {
+                    if (!physConnPillEl) return;
+                    if (active) {
+                        physConnPillEl.textContent = 'Active';
+                        physConnPillEl.className = 'inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200';
+                    } else {
+                        physConnPillEl.textContent = 'Inactive';
+                        physConnPillEl.className = 'inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700 dark:border-red-800 dark:bg-red-900/50 dark:text-red-200';
+                    }
+                }
+
+                function markPhysPayloadReceived(when) {
+                    physLastPayloadAt = when || new Date();
+                    if (physLastTsEl) physLastTsEl.textContent = formatClock(physLastPayloadAt);
+                    setPhysConnection(true);
+                }
+
+                function refreshPhysConnection() {
+                    if (!physLastPayloadAt) {
+                        setPhysConnection(false);
+                        return;
+                    }
+                    const ageMs = Date.now() - physLastPayloadAt.getTime();
+                    setPhysConnection(ageMs < 8000);
+                }
+
+                window.physioPayloadReceived = function () {
+                    markPhysPayloadReceived(new Date());
+                };
+
+                setPhysConnection(false);
+                window.setInterval(refreshPhysConnection, 1000);
+
+                function isAskEnabled() {
+                    return localStorage.getItem(askKey) === '1';
+                }
+
+                function setAskEnabled(enabled) {
+                    localStorage.setItem(askKey, enabled ? '1' : '0');
+                    askToggle.checked = enabled;
+                }
+
+                function openModalForCapture(captureId) {
+                    pendingCaptureId = captureId;
+                    modalOpen = true;
+                    modalBackdrop.style.display = 'flex';
+                    // reset sliders
+                    valenceInput.value = '3.00';
+                    arousalInput.value = '3.00';
+                    valenceVal.textContent = '3.00';
+                    arousalVal.textContent = '3.00';
+                    updateRangeVisual(valenceInput);
+                    updateRangeVisual(arousalInput);
+                    // pause video while answering
+                    mainVideo.pause();
+                    stopCapturing();
+                }
+
+                function closeModal() {
+                    modalBackdrop.style.display = 'none';
+                    modalOpen = false;
+                    pendingCaptureId = null;
+                }
+
+                function openClipModal() {
+                    clipModalOpen = true;
+                    clipModalBackdrop.style.display = 'flex';
+                    clipValenceInput.value = '3.00';
+                    clipArousalInput.value = '3.00';
+                    userValenceInput.value = '3.00';
+                    userArousalInput.value = '3.00';
+                    clipValenceVal.textContent = '3.00';
+                    clipArousalVal.textContent = '3.00';
+                    userValenceVal.textContent = '3.00';
+                    userArousalVal.textContent = '3.00';
+                    updateRangeVisual(clipValenceInput);
+                    updateRangeVisual(clipArousalInput);
+                    updateRangeVisual(userValenceInput);
+                    updateRangeVisual(userArousalInput);
+                }
+
+                function closeClipModal() {
+                    clipModalBackdrop.style.display = 'none';
+                    clipModalOpen = false;
+                }
+
+                function anyModalOpen() {
+                    return modalOpen || clipModalOpen;
+                }
+
+                modalBackdrop.addEventListener('click', (e) => {
+                    if (e.target === modalBackdrop) closeModal();
+                });
+                clipModalBackdrop.addEventListener('click', (e) => {
+                    if (e.target === clipModalBackdrop) closeClipModal();
+                });
+                document.addEventListener('keydown', (e) => {
+                    if (e.key !== 'Escape') return;
+                    if (clipModalOpen) closeClipModal();
+                    else if (modalOpen) closeModal();
+                });
+
+                function setStatus(text) {
+                    statusEl.textContent = text;
+                }
+
+                function setStatusCount(count) {
+                    if (statusCountEl) statusCountEl.textContent = 'Captured: ' + count;
+                }
+
+                function formatTime(seconds) {
+                    if (!Number.isFinite(seconds) || seconds < 0) seconds = 0;
+                    const m = Math.floor(seconds / 60);
+                    const s = Math.floor(seconds % 60);
+                    return `${m}:${String(s).padStart(2, '0')}`;
+                }
+
+                function updateUI() {
+                    const dur = mainVideo.duration;
+                    const cur = mainVideo.currentTime;
+                    const pct = (Number.isFinite(dur) && dur > 0) ? (cur / dur) * 100 : 0;
+                    progressFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+                    timeEl.textContent = `${formatTime(cur)} / ${formatTime(dur)}`;
+                    if (playIconEl) {
+                        playIconEl.textContent = mainVideo.paused ? 'play_arrow' : 'pause';
+                    }
+                    playBtn.setAttribute('aria-label', mainVideo.paused ? 'Play' : 'Pause');
+                }
+
+                function disableNavUntilWatched() {
+                    const links = [prevLink, nextLink].filter(Boolean);
+                    for (const link of links) {
+                        if (!isWatched) {
+                            link.dataset.href = link.getAttribute('href') || '';
+                            link.removeAttribute('href');
+                            link.classList.add('disabled');
+                            link.setAttribute('aria-disabled', 'true');
+                        } else {
+                            const href = link.dataset.href || link.getAttribute('href') || `?i=${link.dataset.index}`;
+                            link.setAttribute('href', href);
+                            link.classList.remove('disabled');
+                            link.removeAttribute('aria-disabled');
+                        }
+                    }
+                }
+
+                async function ensureWebcam() {
+                    if (stream) return stream;
+
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+                    webcamVideo = document.createElement('video');
+                    webcamVideo.playsInline = true;
+                    webcamVideo.muted = true;
+                    webcamVideo.autoplay = true;
+                    webcamVideo.srcObject = stream;
+
+                    // Some browsers (notably Safari) can produce black frames if the video
+                    // element is not in the DOM.
+                    webcamVideo.style.position = 'fixed';
+                    webcamVideo.style.left = '-9999px';
+                    webcamVideo.style.top = '0';
+                    webcamVideo.style.width = '1px';
+                    webcamVideo.style.height = '1px';
+                    webcamVideo.style.opacity = '0';
+                    document.body.appendChild(webcamVideo);
+
+                    // Explicitly start playback so frames are available for canvas.
+                    try {
+                        await webcamVideo.play();
+                    } catch (e) {
+                        // If play() fails, we'll still try to capture after metadata/data events.
+                    }
+
+                    // Wait for dimensions so canvas captures at the right size
+                    await new Promise((resolve) => {
+                        const onReady = () => {
+                            if (webcamVideo.videoWidth > 0 && webcamVideo.videoHeight > 0) {
+                                webcamVideo.removeEventListener('loadedmetadata', onReady);
+                                resolve();
+                            }
+                        };
+                        webcamVideo.addEventListener('loadedmetadata', onReady);
+
+                        // If metadata is already available, resolve immediately.
+                        onReady();
+                    });
+
+                    // Wait until the video is actually producing frames
+                    await new Promise((resolve) => {
+                        const onPlaying = () => {
+                            webcamVideo.removeEventListener('playing', onPlaying);
+                            resolve();
+                        };
+                        if (webcamVideo.readyState >= 2) {
+                            resolve();
+                            return;
+                        }
+                        webcamVideo.addEventListener('playing', onPlaying);
+                        // Fallback in case 'playing' doesn't fire consistently
+                        setTimeout(resolve, 300);
+                    });
+
+                    return stream;
+                }
+
+                async function captureOnce() {
+                    if (!webcamVideo) return;
+
+                    // Ensure we have actual image data (avoid black frames)
+                    if (webcamVideo.readyState < 2 || webcamVideo.videoWidth === 0) {
+                        await new Promise((r) => setTimeout(r, 150));
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = webcamVideo.videoWidth || 640;
+                    canvas.height = webcamVideo.videoHeight || 480;
+
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    ctx.drawImage(webcamVideo, 0, 0, canvas.width, canvas.height);
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+                    const resp = await fetch(captureEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                        },
+                        body: JSON.stringify({
+                            video_name: videoName,
+                            image_data: dataUrl,
+                        }),
+                    });
+
+                    if (!resp.ok) {
+                        throw new Error(`Capture failed (${resp.status})`);
+                    }
+
+                    const json = await resp.json();
+                    if (json && json.ok && json.capture_id) {
+                        captureCount += 1;
+                        setStatus(`Watching: capturing a photo every ${captureIntervalLabel}.`);
+                        setStatusCount(captureCount);
+
+                        if (isAskEnabled()) {
+                            openModalForCapture(json.capture_id);
+                        }
+                    }
+                }
+
+                async function startCapturing() {
+                    if (captureTimer) return;
+                    if (captureStarting) return;
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        setStatus('Camera not available in this browser.');
+                        return;
+                    }
+
+                    captureStarting = (async () => {
+                        try {
+                            await ensureWebcam();
+                            setStatus(`Watching: capturing a photo every ${captureIntervalLabel}.`);
+                            // Capture every 10 seconds while playing (no immediate capture)
+                            captureTimer = window.setInterval(() => {
+                                if (mainVideo.paused || mainVideo.ended) return;
+                                captureOnce().catch(() => {
+                                    // keep silent; user can see status below if needed
+                                });
+                            }, captureIntervalMs);
+                        } catch (e) {
+                            setStatus('Camera permission denied or unavailable; snapshots disabled.');
+                        } finally {
+                            captureStarting = null;
+                        }
+                    })();
+
+                    await captureStarting;
+                }
+
+                function stopCapturing() {
+                    if (captureTimer) {
+                        window.clearInterval(captureTimer);
+                        captureTimer = null;
+                    }
+                    if (!isWatched) {
+                        setStatus('Paused: snapshots stopped. Finish the video to unlock Next/Previous.');
+                    } else {
+                        setStatus('Paused: snapshots stopped.');
+                    }
+                }
+
+                function markWatched() {
+                    isWatched = true;
+                    localStorage.setItem(watchedKey, '1');
+                    disableNavUntilWatched();
+                    setStatus('Completed: navigation unlocked.');
+                }
+
+                disableNavUntilWatched();
+                setStatus(isWatched ? 'Navigation unlocked (already watched).' : 'Start playing and watch fully to unlock Next/Previous.');
+
+                // Custom controls (timeline is read-only)
+                playBtn.addEventListener('click', async () => {
+                    if (mainVideo.paused) {
+                        try { await mainVideo.play(); } catch (e) {}
+                    } else {
+                        mainVideo.pause();
+                    }
+                });
+
+                // Click anywhere on the video to toggle play/pause
+                mainVideo.addEventListener('click', async () => {
+                    if (anyModalOpen()) return;
+                    if (mainVideo.paused) {
+                        try { await mainVideo.play(); } catch (e) {}
+                    } else {
+                        mainVideo.pause();
+                    }
+                });
+
+                // Ask toggle init
+                setAskEnabled(isAskEnabled());
+                askToggle.addEventListener('change', () => {
+                    setAskEnabled(askToggle.checked);
+                });
+
+                valenceInput.addEventListener('input', () => {
+                    valenceVal.textContent = Number(valenceInput.value).toFixed(2);
+                    updateRangeVisual(valenceInput);
+                });
+                arousalInput.addEventListener('input', () => {
+                    arousalVal.textContent = Number(arousalInput.value).toFixed(2);
+                    updateRangeVisual(arousalInput);
+                });
+
+                submitRatingBtn.addEventListener('click', async () => {
+                    if (!pendingCaptureId) {
+                        closeModal();
+                        return;
+                    }
+                    const valence = Number(valenceInput.value).toFixed(2);
+                    const arousal = Number(arousalInput.value).toFixed(2);
+                    try {
+                        const resp = await fetch(ratingEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                            },
+                            body: JSON.stringify({
+                                video_name: videoName,
+                                capture_id: pendingCaptureId,
+                                valence,
+                                arousal,
+                            }),
+                        });
+                        if (!resp.ok) {
+                            throw new Error(`Rating failed (${resp.status})`);
+                        }
+                    } catch (e) {
+                        setStatus('Could not save rating. Please try again.');
+                        return;
+                    }
+
+                    closeModal();
+                    if (!clipModalOpen) try { await mainVideo.play(); } catch (e) {}
+                });
+
+                [clipValenceInput, clipArousalInput, userValenceInput, userArousalInput].forEach((input, i) => {
+                    const valEl = [clipValenceVal, clipArousalVal, userValenceVal, userArousalVal][i];
+                    if (!input || !valEl) return;
+                    input.addEventListener('input', () => {
+                        valEl.textContent = Number(input.value).toFixed(2);
+                        updateRangeVisual(input);
+                    });
+                });
+
+                submitClipBtn.addEventListener('click', async () => {
+                    const clip_valence = Number(clipValenceInput.value);
+                    const clip_arousal = Number(clipArousalInput.value);
+                    const user_valence = Number(userValenceInput.value);
+                    const user_arousal = Number(userArousalInput.value);
+                    try {
+                        const resp = await fetch(clipQuestionnaireEndpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                            },
+                            body: JSON.stringify({
+                                video_name: videoName,
+                                clip_valence,
+                                clip_arousal,
+                                user_valence,
+                                user_arousal,
+                            }),
+                        });
+                        if (!resp.ok) {
+                            throw new Error(`Submit failed (${resp.status})`);
+                        }
+                    } catch (e) {
+                        setStatus('Could not save clip rating. Please try again.');
+                        return;
+                    }
+                    closeClipModal();
+                    if (!modalOpen) updateUI();
+                });
+
+                // Block seeking (timeline should not be interactive)
+                mainVideo.addEventListener('seeking', () => {
+                    if (programmaticSeek) return;
+                    if (anyModalOpen()) {
+                        programmaticSeek = true;
+                        mainVideo.currentTime = lastAllowedTime;
+                        setTimeout(() => { programmaticSeek = false; }, 0);
+                        return;
+                    }
+                    // If user tries to seek, snap back to last allowed time.
+                    programmaticSeek = true;
+                    mainVideo.currentTime = lastAllowedTime;
+                    setTimeout(() => { programmaticSeek = false; }, 0);
+                    if (!seekBlockMessageShown) {
+                        seekBlockMessageShown = true;
+                        setStatus('Seeking is disabled. Watch the video normally to unlock navigation.');
+                        setTimeout(() => {
+                            seekBlockMessageShown = false;
+                            setStatus(isWatched ? 'Navigation unlocked.' : (mainVideo.paused ? 'Paused: snapshots stopped. Finish the video to unlock Next/Previous.' : 'Watching: capturing a photo every 10s.'));
+                        }, 2000);
+                    }
+                });
+
+                mainVideo.addEventListener('timeupdate', () => {
+                    if (!programmaticSeek) {
+                        lastAllowedTime = mainVideo.currentTime;
+                    }
+                    updateUI();
+                });
+                mainVideo.addEventListener('loadedmetadata', updateUI);
+                mainVideo.addEventListener('durationchange', updateUI);
+
+                // Use 'playing' so capture starts only when playback is actually happening.
+                mainVideo.addEventListener('playing', () => {
+                    startCapturing();
+                    updateUI();
+                });
+                // Fallback: some browsers behave differently; try again shortly after 'play'.
+                mainVideo.addEventListener('play', () => {
+                    setTimeout(() => {
+                        if (!mainVideo.paused) startCapturing();
+                    }, 200);
+                    updateUI();
+                });
+                mainVideo.addEventListener('pause', () => {
+                    stopCapturing();
+                    updateUI();
+                });
+                mainVideo.addEventListener('ended', () => {
+                    stopCapturing();
+                    markWatched();
+                    // Update server-side progress so this user resumes from next video.
+                    fetch(markWatchedEndpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}),
+                        },
+                        body: JSON.stringify({
+                            video_name: videoName,
+                            video_index: videoIndex,
+                        }),
+                    }).catch(() => {});
+                    updateUI();
+                    // Show clip questionnaire (stacked on top if capture modal is already open).
+                    openClipModal();
+                });
+
+                // Initial UI paint
+                updateRangeVisual(valenceInput);
+                updateRangeVisual(arousalInput);
+                updateRangeVisual(clipValenceInput);
+                updateRangeVisual(clipArousalInput);
+                updateRangeVisual(userValenceInput);
+                updateRangeVisual(userArousalInput);
+                updateUI();
+            })();
+        </script>
+    {% else %}
+        <div class="empty">
+            <p>No videos found yet.</p>
+            <p>Add files to <code>collector/media/videos/</code> and refresh this page.</p>
+        </div>
+    {% endif %}
+{% endblock %}

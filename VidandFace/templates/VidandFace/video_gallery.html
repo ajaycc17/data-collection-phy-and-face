@@ -2,7 +2,7 @@
 
 {% block title %}Video Gallery{% endblock %}
 
-{% block main_class %}mx-auto w-full max-w-6xl pt-3 pb-8{% endblock %}
+{% block main_class %}mx-auto w-full max-w-6xl py-3{% endblock %}
 
 {% block extra_head %}
     <style>
@@ -192,8 +192,7 @@
                             <a
                                 class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
                                 data-nav="prev"
-                                data-index="{{ prev_index }}"
-                                href="?i={{ prev_index }}"
+                                href="?nav=prev&i={{ current_index }}{% if request.GET.show_mcq == '1' %}&show_mcq=1{% endif %}"
                             >
                                 Previous
                             </a>
@@ -207,8 +206,7 @@
                             <a
                                 class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
                                 data-nav="next"
-                                data-index="{{ next_index }}"
-                                href="?i={{ next_index }}"
+                                href="?nav=next&i={{ current_index }}{% if request.GET.show_mcq == '1' %}&show_mcq=1{% endif %}"
                             >
                                 Next
                             </a>
@@ -219,7 +217,7 @@
                 </div>
 
                 <div class="relative overflow-hidden">
-                    <video id="main-video" class="w-full cursor-pointer rounded-t-3xl bg-black" preload="metadata" data-video-name="{{ current_video.name|escapejs }}" data-video-index="{{ current_index }}">
+                    <video id="main-video" class="h-[calc(100vh-300px)] w-full cursor-pointer rounded-t-3xl bg-black" preload="metadata" data-video-name="{{ current_video.name|escapejs }}" data-video-index="{{ current_index }}">
                         <source src="{{ current_video.url }}">
                         Your browser does not support the video tag.
                     </video>
@@ -592,8 +590,8 @@
                             link.classList.add('disabled');
                             link.setAttribute('aria-disabled', 'true');
                         } else {
-                            const href = link.dataset.href || link.getAttribute('href') || `?i=${link.dataset.index}`;
-                            link.setAttribute('href', href);
+                            const href = link.dataset.href || link.getAttribute('href') || '';
+                            if (href) link.setAttribute('href', href);
                             link.classList.remove('disabled');
                             link.removeAttribute('aria-disabled');
                         }

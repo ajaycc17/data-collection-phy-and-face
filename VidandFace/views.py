@@ -2,6 +2,8 @@ from pathlib import Path
 import base64
 import json
 import csv
+import random
+from urllib.parse import urlencode
 from datetime import datetime
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
@@ -49,6 +51,10 @@ def video_gallery(request):
 
     progress, _ = UserVideoProgress.objects.get_or_create(user=request.user)
 
+    watched_indices = set(
+        WatchedVideo.objects.filter(user=request.user).values_list('video_index', flat=True)
+    )
+
     # Which video to show (0-based). Use ?i=0, ?i=1, ...
     default_index = progress.next_video_index
     try:
@@ -61,19 +67,43 @@ def video_gallery(request):
         current_index = 0
     else:
         current_index = max(0, min(current_index, total - 1))
+
+        nav = (request.GET.get('nav') or '').strip().lower()
+        if nav in {'next', 'prev'}:
+            if nav == 'next':
+                candidates = [
+                    idx
+                    for idx in range(total)
+                    if idx not in watched_indices and idx != current_index
+                ]
+            else:
+                candidates = [
+                    idx
+                    for idx in range(total)
+                    if idx in watched_indices and idx != current_index
+                ]
+
+            if candidates:
+                chosen = random.SystemRandom().choice(candidates)
+                params = {'i': str(chosen)}
+                if (request.GET.get('show_mcq') or '').strip() == '1':
+                    params['show_mcq'] = '1'
+                return redirect(f"{reverse('video-gallery')}?{urlencode(params)}")
+
         current_video = video_files[current_index]
 
     progress_pct = (100 * progress.videos_watched / total) if total else 0
+
+    can_prev = any(idx in watched_indices and idx != current_index for idx in range(total))
+    can_next = any(idx not in watched_indices and idx != current_index for idx in range(total))
 
     context = {
         'video_files': video_files,
         'current_video': current_video,
         'current_index': current_index,
         'total': total,
-        'has_prev': total > 0 and current_index > 0,
-        'has_next': total > 0 and current_index < total - 1,
-        'prev_index': max(0, current_index - 1),
-        'next_index': min(total - 1, current_index + 1) if total > 0 else 0,
+        'has_prev': total > 0 and can_prev,
+        'has_next': total > 0 and can_next,
         'user_email': request.user.email or request.user.username,
         'videos_watched': progress.videos_watched,
         'progress_pct': round(progress_pct, 1),
@@ -367,9 +397,16 @@ def logout_view(request):
 
 
 def logout_on_close(request):
-    """Called via sendBeacon when tab is closed; invalidates session and returns 204."""
+    """No-op endpoint.
+
+    Historically this was called via `sendBeacon` on `beforeunload/pagehide`.
+    Those events also fire during a normal refresh/navigation, which caused users
+    to be logged out unexpectedly.
+
+    Per current UX: users should only be logged out when they explicitly press
+    the Logout button.
+    """
     if request.method != 'POST':
         return HttpResponse(status=405)
-    logout(request)
     return HttpResponse(status=204)
 

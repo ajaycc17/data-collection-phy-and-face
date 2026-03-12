@@ -337,14 +337,53 @@
   .h-1 {
     height: calc(var(--spacing) * 1);
   }
+  .h-1\/4 {
+    height: calc(1 / 4 * 100%);
+  }
   .h-2 {
     height: calc(var(--spacing) * 2);
+  }
+  .h-3\/4 {
+    height: calc(3 / 4 * 100%);
   }
   .h-4 {
     height: calc(var(--spacing) * 4);
   }
   .h-9 {
     height: calc(var(--spacing) * 9);
+  }
+  .h-45 {
+    height: calc(var(--spacing) * 45);
+  }
+  .h-\[calc\(\)\] {
+    height: calc();
+  }
+  .h-\[calc\(100vh-0px\)\] {
+    height: calc(100vh - 0px);
+  }
+  .h-\[calc\(100vh-100px\)\] {
+    height: calc(100vh - 100px);
+  }
+  .h-\[calc\(100vh-200px\)\] {
+    height: calc(100vh - 200px);
+  }
+  .h-\[calc\(100vh-250px\)\] {
+    height: calc(100vh - 250px);
+  }
+  .h-\[calc\(100vh-280px\)\] {
+    height: calc(100vh - 280px);
+  }
+  .h-\[calc\(100vh-300px\)\] {
+    height: calc(100vh - 300px);
+  }
+  .h-\[calc\(100vh-350px\)\] {
+    height: calc(100vh - 350px);
+  }
+  .h-\[calc\(100vh-2500px\)\] {
+    height: calc(100vh - 2500px);
+  }
+  .h-\[calc\] {
+    height: calc;
   }
   .h-full {
     height: 100%;
@@ -460,6 +499,9 @@
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 5) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 5) * calc(1 - var(--tw-space-y-reverse)));
+  }
+  .overflow-auto {
+    overflow: auto;
   }
   .overflow-hidden {
     overflow: hidden;
@@ -628,6 +670,9 @@
     .bg-white\/60 {
       background-color: color-mix(in oklab, var(--color-white) 60%, transparent);
     }
+  }
+  .object-contain {
+    object-fit: contain;
   }
   .p-4 {
     padding: calc(var(--spacing) * 4);
@@ -912,6 +957,11 @@
   @media (width >= 64rem) {
     .lg\:grid-cols-4 {
       grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+  @media (width >= 64rem) {
+    .lg\:overflow-hidden {
+      overflow: hidden;
     }
   }
   .dark\:border-amber-700:where(.dark, .dark *) {

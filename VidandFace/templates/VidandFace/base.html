@@ -394,7 +394,6 @@
   </div>
   <script>
     (function() {
-      var storageKey = 'mcqQuestionnaireShown';
       var urlParams = new URLSearchParams(window.location.search);
       var showFromLogin = urlParams.get('show_mcq') === '1';
       var backdrop = document.getElementById('mcq-modal-backdrop');
@@ -405,6 +404,18 @@
       var csrfToken = csrfInput ? csrfInput.value : '';
       var endpoint = '{% url "submit-mcq-questionnaire" %}';
       var logoutUrl = '{% url "logout" %}';
+
+      var logoutPendingStorageKey = 'mcqLogoutPending';
+
+      function removeShowMcqParam() {
+        if (!window.history.replaceState) return;
+        var p = new URLSearchParams(window.location.search);
+        if (!p.has('show_mcq')) return;
+        p.delete('show_mcq');
+        var newSearch = p.toString();
+        var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+      }
 
       function showMcqModal() {
         backdrop.style.display = 'flex';
@@ -422,22 +433,13 @@
         backdrop.classList.add('hidden');
       }
 
-      if (showFromLogin || !sessionStorage.getItem(storageKey)) {
-        if (showFromLogin && window.history.replaceState) {
-          urlParams.delete('show_mcq');
-          var newSearch = urlParams.toString();
-          var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
-          window.history.replaceState({}, '', newUrl);
-        }
+      if (sessionStorage.getItem(logoutPendingStorageKey) === '1') {
+        window.mcqLogoutPending = true;
+        resetMcqForm();
+        showMcqModal();
+      } else if (showFromLogin) {
         showMcqModal();
       }
-
-      backdrop.addEventListener('click', function(e) {
-        if (e.target === backdrop) closeMcqModal();
-      });
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && backdrop.style.display === 'flex') closeMcqModal();
-      });
 
       submitBtn.addEventListener('click', function() {
         var body = {};
@@ -462,9 +464,10 @@
           if (data.ok) {
             if (window.mcqLogoutPending) {
               window.mcqLogoutPending = false;
+              sessionStorage.removeItem(logoutPendingStorageKey);
               window.location.href = logoutUrl;
             } else {
-              sessionStorage.setItem(storageKey, '1');
+              removeShowMcqParam();
               closeMcqModal();
             }
           } else {
@@ -483,25 +486,11 @@
         logoutBtn.addEventListener('click', function(e) {
           e.preventDefault();
           window.mcqLogoutPending = true;
+          sessionStorage.setItem(logoutPendingStorageKey, '1');
           resetMcqForm();
           showMcqModal();
         });
       }
-    })();
-  </script>
-  <script>
-    (function() {
-      var logoutOnCloseUrl = '{% url "logout-on-close" %}';
-      var csrfInput = document.querySelector('#mcq-csrf-form input[name="csrfmiddlewaretoken"]');
-      var csrfToken = csrfInput ? csrfInput.value : '';
-      function doLogoutBeacon() {
-        var fd = new FormData();
-        fd.append('csrfmiddlewaretoken', csrfToken);
-        fd.append('next', '/');
-        navigator.sendBeacon(logoutOnCloseUrl, fd);
-      }
-      window.addEventListener('beforeunload', doLogoutBeacon);
-      window.addEventListener('pagehide', doLogoutBeacon);
     })();
   </script>
   {% endif %}

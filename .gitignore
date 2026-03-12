@@ -25,6 +25,7 @@ db.sqlite3-journal
 media/*
 !media/videos
 media/videos/*
+!media/videos/*.txt
 # If you prefer to keep media structure but not files, use:
 # media/*
 # !media/.gitkeep

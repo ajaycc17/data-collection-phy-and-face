@@ -186,38 +186,8 @@
     {% if current_video %}
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
             <section class="lg:col-span-3">
-                <div class="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                        {% if has_prev %}
-                            <a
-                                class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                                data-nav="prev"
-                                href="?nav=prev&i={{ current_index }}{% if request.GET.show_mcq == '1' %}&show_mcq=1{% endif %}"
-                            >
-                                Previous
-                            </a>
-                        {% else %}
-                            <span class="btn disabled inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white">Previous</span>
-                        {% endif %}
-                    </div>
-
-                    <div>
-                        {% if has_next %}
-                            <a
-                                class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                                data-nav="next"
-                                href="?nav=next&i={{ current_index }}{% if request.GET.show_mcq == '1' %}&show_mcq=1{% endif %}"
-                            >
-                                Next
-                            </a>
-                        {% else %}
-                            <span class="btn disabled inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white">Next</span>
-                        {% endif %}
-                    </div>
-                </div>
-
                 <div class="relative overflow-hidden">
-                    <video id="main-video" class="h-[calc(100vh-300px)] w-full cursor-pointer rounded-t-3xl bg-black" preload="metadata" data-video-name="{{ current_video.name|escapejs }}" data-video-index="{{ current_index }}">
+                    <video id="main-video" class="h-[calc(100vh-300px)] w-full cursor-pointer rounded-t-3xl bg-black" preload="metadata" data-video-name="{{ current_video.name|escapejs }}">
                         <source src="{{ current_video.url }}">
                         Your browser does not support the video tag.
                     </video>
@@ -241,21 +211,40 @@
                         </div>
                     </div>
                 </div>
+                <div class="flex items-center justify-between gap-3 mt-4">
+                    <div>
+                        <h1 class="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">{{ current_video.name }}</h1>
 
-                <h1 class="mt-4 text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">{{ current_video.name }}</h1>
-
-                <div class="text-sm text-neutral-600 dark:text-neutral-400">Video {{ current_index|add:1 }} of {{ total }}</div>
-
+                        <div class="text-sm text-neutral-600 dark:text-neutral-400">Video {{ current_index|add:1 }} of {{ total }}</div>
+                    </div>
+                    <div class="mb-3 flex items-center justify-end gap-3">
+                        <div>
+                            {% if has_next %}
+                                <a
+                                    class="btn inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 gap-2"
+                                    data-nav="next"
+                                       href="?nav=next&i={{ current_index }}"
+                                >
+                                    Next <span class="material-symbols-outlined text-xs">
+                                        arrow_right_alt
+                                        </span>
+                                </a>
+                            {% else %}
+                                <span class="btn disabled inline-flex items-center justify-center rounded-xl bg-green-700 px-4 py-2 text-sm font-medium text-white">Next</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <aside class="lg:col-span-1">
                 <div class="rounded-xl bg-white p-4 dark:bg-neutral-800">
                     <div class="flex items-center justify-between gap-3">
                         <div class="text-sm font-medium text-neutral-900 dark:text-neutral-100">Progress</div>
-                        <div class="text-sm text-neutral-600 dark:text-neutral-400">{{ videos_watched }} / {{ total }} watched</div>
+                        <div id="videos-watched-label" class="text-sm text-neutral-600 dark:text-neutral-400">{{ videos_watched }} / {{ total }} watched</div>
                     </div>
                     <div class="mt-2 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
-                        <div class="h-full bg-neutral-900 dark:bg-neutral-100" style="width: {{ progress_pct }}%;"></div>
+                        <div id="videos-watched-bar" class="h-full bg-neutral-900 dark:bg-neutral-100" style="width: {{ progress_pct }}%;"></div>
                     </div>
                 </div>
 
@@ -401,6 +390,8 @@
                 const userValenceVal = document.getElementById('user-valence-val');
                 const userArousalVal = document.getElementById('user-arousal-val');
                 const submitClipBtn = document.getElementById('submit-clip-questionnaire');
+                const videosWatchedLabel = document.getElementById('videos-watched-label');
+                const videosWatchedBar = document.getElementById('videos-watched-bar');
 
                 function updateRangeVisual(inputEl) {
                     if (!inputEl) return;
@@ -418,7 +409,6 @@
                 const csrfToken = csrfInput ? csrfInput.value : '';
 
                 const videoName = mainVideo.getAttribute('data-video-name') || 'unknown';
-                const videoIndex = parseInt(mainVideo.getAttribute('data-video-index') || '0', 10);
                 const watchedKey = `watched:${videoName}`;
                 const captureEndpoint = "{% url 'capture-photo' %}";
                 const ratingEndpoint = "{% url 'submit-rating' %}";
@@ -429,8 +419,13 @@
                 const captureIntervalLabel = (captureIntervalMs % 1000 === 0)
                     ? ((captureIntervalMs / 1000) + 's')
                     : (captureIntervalMs + 'ms');
+                const totalVideos = {{ total|default:0 }};
+                const askPayoutDetails = {{ ask_payout_details|default:False|yesno:'true,false' }};
+                const completionDetailsUrl = "{% url 'completion-details' %}";
+                const completionThankYouUrl = "{% url 'completion-thank-you' %}";
 
-                let isWatched = localStorage.getItem(watchedKey) === '1';
+                let isWatched = {{ is_watched|yesno:'true,false' }};
+                let videosWatchedCount = {{ videos_watched|default:0 }};
                 let stream = null;
                 let webcamVideo = null;
                 let captureTimer = null;
@@ -560,6 +555,16 @@
 
                 function setStatusCount(count) {
                     if (statusCountEl) statusCountEl.textContent = 'Captured: ' + count;
+                }
+
+                function updateSidebarProgress() {
+                    if (videosWatchedLabel) {
+                        videosWatchedLabel.textContent = `${videosWatchedCount} / ${totalVideos} watched`;
+                    }
+                    if (videosWatchedBar) {
+                        const pct = totalVideos > 0 ? (videosWatchedCount / totalVideos) * 100 : 0;
+                        videosWatchedBar.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+                    }
                 }
 
                 function formatTime(seconds) {
@@ -858,6 +863,10 @@
                         return;
                     }
                     closeClipModal();
+                    if (totalVideos > 0 && videosWatchedCount >= totalVideos) {
+                        window.location.href = askPayoutDetails ? completionDetailsUrl : completionThankYouUrl;
+                        return;
+                    }
                     if (!modalOpen) updateUI();
                 });
 
@@ -910,9 +919,14 @@
                     updateUI();
                 });
                 mainVideo.addEventListener('ended', () => {
+                    const wasAlreadyWatched = isWatched;
                     stopCapturing();
                     markWatched();
-                    // Update server-side progress so this user resumes from next video.
+                    if (!wasAlreadyWatched) {
+                        videosWatchedCount += 1;
+                        updateSidebarProgress();
+                    }
+                    // Persist server-side progress (current video + navigation-unlocked state).
                     fetch(markWatchedEndpoint, {
                         method: 'POST',
                         headers: {
@@ -921,7 +935,6 @@
                         },
                         body: JSON.stringify({
                             video_name: videoName,
-                            video_index: videoIndex,
                         }),
                     }).catch(() => {});
                     updateUI();

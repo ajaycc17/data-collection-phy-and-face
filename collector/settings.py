@@ -10,7 +10,8 @@ except Exception:  # pragma: no cover
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 if load_dotenv is not None:
-    load_dotenv(BASE_DIR / ".env")
+    # In dev, prefer .env over any already-exported shell vars.
+    load_dotenv(BASE_DIR / ".env", override=True)
 
 SECRET_KEY = os.getenv(
     "DJANGO_SECRET_KEY",
@@ -21,6 +22,18 @@ SECRET_KEY = os.getenv(
 DEBUG = True
 ALLOWED_HOSTS = []
 CAPTURE_INTERVAL_MS = int(os.getenv("CAPTURE_INTERVAL_SEC", "10")) * 1000
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    val = os.getenv(name)
+    if val is None:
+        return default
+    if not val.strip():
+        return default
+    return val.strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+ASK_PAYOUT_DETAILS = _env_bool("ASK_PAYOUT_DETAILS", False)
 
 # Application definition
 INSTALLED_APPS = [

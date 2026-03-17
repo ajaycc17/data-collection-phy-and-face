@@ -16,7 +16,8 @@ class CaptureRating(models.Model):
 
 class UserVideoProgress(models.Model):
 	user = models.OneToOneField(User, on_delete=models.CASCADE)
-	next_video_index = models.PositiveIntegerField(default=0)
+	current_video_name = models.CharField(max_length=255, blank=True, default='')
+	next_active = models.BooleanField(default=False)
 	videos_watched = models.PositiveIntegerField(default=0)
 	updated_at = models.DateTimeField(auto_now=True)
 
@@ -24,8 +25,12 @@ class UserVideoProgress(models.Model):
 class WatchedVideo(models.Model):
 	user = models.ForeignKey(User, on_delete=models.CASCADE)
 	video_name = models.CharField(max_length=255)
-	video_index = models.PositiveIntegerField()
 	watched_at = models.DateTimeField(auto_now_add=True)
 
 	class Meta:
-		unique_together = (('user', 'video_index'),)
+		unique_together = (('user', 'video_name'),)
+
+
+class PayoutDetailsSubmission(models.Model):
+	user = models.OneToOneField(User, on_delete=models.CASCADE)
+	submitted_at = models.DateTimeField(auto_now_add=True)

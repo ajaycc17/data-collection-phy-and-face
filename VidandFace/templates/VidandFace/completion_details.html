@@ -1,0 +1,70 @@
+{% extends "VidandFace/base.html" %}
+
+{% block title %}Payment Details{% endblock %}
+
+{% block main_class %}mx-auto w-full max-w-xl px-6 py-8{% endblock %}
+
+{% block content %}
+  <div class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-neutral-700 dark:bg-neutral-800">
+    <h1 class="text-xl font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">Almost done</h1>
+    <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">Please share your UPI ID and WhatsApp number.</p>
+
+    {% if error %}
+      <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-900/40 dark:text-red-200">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" class="mt-6 space-y-4">
+      {% csrf_token %}
+
+      <div>
+        <label for="upi_id" class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">UPI ID</label>
+        <input
+          id="upi_id"
+          name="upi_id"
+          type="text"
+          required
+          value="{{ upi_id|default:'' }}"
+          placeholder="name@bank"
+          class="mt-2 block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500"
+        />
+      </div>
+
+      <div>
+        <label for="confirm_upi_id" class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">Confirm UPI ID</label>
+        <input
+          id="confirm_upi_id"
+          name="confirm_upi_id"
+          type="text"
+          required
+          value="{{ confirm_upi_id|default:'' }}"
+          placeholder="name@bank"
+          class="mt-2 block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500"
+        />
+      </div>
+
+      <div>
+        <label for="whatsapp_number" class="block text-sm font-medium text-neutral-800 dark:text-neutral-200">WhatsApp number</label>
+        <input
+          id="whatsapp_number"
+          name="whatsapp_number"
+          type="tel"
+          required
+          value="{{ whatsapp_number|default:'' }}"
+          placeholder="+91XXXXXXXXXX"
+          class="mt-2 block w-full rounded-xl border border-neutral-300 bg-white px-4 py-3 text-sm placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none dark:border-neutral-600 dark:bg-neutral-900/40 dark:text-neutral-100 dark:placeholder:text-neutral-500 dark:focus:border-neutral-500"
+        />
+      </div>
+
+      <button
+        type="submit"
+        class="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-3 text-sm font-medium text-white hover:bg-neutral-800 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-neutral-200"
+      >
+        Submit
+      </button>
+
+      <p class="text-xs text-neutral-500 dark:text-neutral-400">Signed in as {{ user_email }}</p>
+    </form>
+  </div>
+{% endblock %}

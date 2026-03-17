@@ -3,6 +3,8 @@ from . import views
 
 urlpatterns = [
     path('', views.video_gallery, name='video-gallery'),
+    path('completion-details/', views.completion_details, name='completion-details'),
+    path('completion-thank-you/', views.completion_thank_you, name='completion-thank-you'),
     path('signup/', views.signup_view, name='signup'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),

@@ -394,8 +394,7 @@
   </div>
   <script>
     (function() {
-      var urlParams = new URLSearchParams(window.location.search);
-      var showFromLogin = urlParams.get('show_mcq') === '1';
+      var showFromLogin = {{ show_mcq_once|default:False|yesno:'true,false' }};
       var backdrop = document.getElementById('mcq-modal-backdrop');
       var submitBtn = document.getElementById('mcq-modal-submit');
       if (!backdrop || !submitBtn) return;
@@ -406,16 +405,6 @@
       var logoutUrl = '{% url "logout" %}';
 
       var logoutPendingStorageKey = 'mcqLogoutPending';
-
-      function removeShowMcqParam() {
-        if (!window.history.replaceState) return;
-        var p = new URLSearchParams(window.location.search);
-        if (!p.has('show_mcq')) return;
-        p.delete('show_mcq');
-        var newSearch = p.toString();
-        var newUrl = window.location.pathname + (newSearch ? '?' + newSearch : '') + window.location.hash;
-        window.history.replaceState({}, '', newUrl);
-      }
 
       function showMcqModal() {
         backdrop.style.display = 'flex';
@@ -467,7 +456,6 @@
               sessionStorage.removeItem(logoutPendingStorageKey);
               window.location.href = logoutUrl;
             } else {
-              removeShowMcqParam();
               closeMcqModal();
             }
           } else {
